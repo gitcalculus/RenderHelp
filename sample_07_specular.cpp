@@ -88,6 +88,8 @@ int main(void)
 	rh.SetPixelShader([&] (ShaderContext& input) -> Vec4f {
 			return Vec4f(0,0,0,1);
 		});
+	rh.EnableCullFace(true);
+	rh.SetCullFace(2);
 
 	// 迭代模型每一个面
 	for (int i = 0; i < model.nfaces(); i++) {
@@ -98,7 +100,7 @@ int main(void)
 			vs_input[j].normal = model.normal(i, j);
 		}
 		// 绘制三角形
-		rh.DrawPrimitive(2);
+		rh.DrawPrimitive();
 	}
 
 

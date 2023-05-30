@@ -1204,6 +1204,8 @@ public:
 	// 设置 VS/PS 着色器函数
 	inline void SetVertexShader(VertexShader vs) { _vertex_shader = vs; }
 	inline void SetPixelShader(PixelShader ps) { _pixel_shader = ps; }
+	inline void EnableCullFace(bool enable) { _cull_face = enable; }
+	inline void SetCullFace(int cullFace) { _cull_face_type = cullFace; }
 
 	// 保存 FrameBuffer 到 BMP 文件
 	inline void SaveFile(const char *filename) { if (_frame_buffer) _frame_buffer->SaveFile(filename); }
@@ -1236,7 +1238,7 @@ public:
 public:
 
 	// 绘制一个三角形，必须先设定好着色器函数
-	inline bool DrawPrimitive(int cullFace = 0) {
+	inline bool DrawPrimitive() {
 		if (_frame_buffer == NULL || _vertex_shader == NULL) 
 			return false;
 		// 顶点初始化
@@ -1312,34 +1314,27 @@ public:
 			vtx[1] = &_vertex[2];
 			vtx[2] = &_vertex[1];
 		}
-		// 针对背面/正面进行剔除
-		if (cullFace == 0) {
-			// 不剔除
-			if (normal.z == 0.0f) {
-				return false;
-			}
-		}
-		else if (cullFace == 1) {
-			// 背面剔除 GL_BACK
-			if (normal.z > 0.0f) {
-				return false;
-			}
-			else if (normal.z == 0.0f) {
-				return false;
-			}
-		}
-		else if (cullFace == 2) {
-			// 正面剔除 GL_FRONT
-			if (normal.z < 0.0f) {
-				return false;
-			}
-			else if (normal.z == 0.0f) {
-				return false;
-			}
-		}
-		else if (cullFace == 3) {
-			// 全剔除
+		else if (normal.z == 0.0f) {
 			return false;
+		}
+		// 开启 背面/正面进行剔除
+		if (_cull_face) {
+			if (_cull_face_type == 1) {
+				// 背面剔除 GL_BACK
+				if (normal.z > 0.0f) {
+					return false;
+				}
+			}
+			else if (_cull_face_type == 2) {
+				// 正面剔除 GL_FRONT
+				if (normal.z < 0.0f) {
+					return false;
+				}
+			}
+			else if (_cull_face_type == 3) {
+				// 全剔除
+				return false;
+			}
 		}
 
 		// 保存三个端点位置
@@ -1505,6 +1500,8 @@ protected:
 
 	VertexShader _vertex_shader;
 	PixelShader _pixel_shader;
+	bool _cull_face;
+	int _cull_face_type;
 };
 
 
