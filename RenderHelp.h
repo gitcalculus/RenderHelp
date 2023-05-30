@@ -1236,10 +1236,9 @@ public:
 public:
 
 	// 绘制一个三角形，必须先设定好着色器函数
-	inline bool DrawPrimitive() {
+	inline bool DrawPrimitive(int cullFace = 0) {
 		if (_frame_buffer == NULL || _vertex_shader == NULL) 
 			return false;
-
 		// 顶点初始化
 		for (int k = 0; k < 3; k++) {
 			Vertex& vertex = _vertex[k];
@@ -1313,7 +1312,33 @@ public:
 			vtx[1] = &_vertex[2];
 			vtx[2] = &_vertex[1];
 		}
-		else if (normal.z == 0.0f) {
+		// 针对背面/正面进行剔除
+		if (cullFace == 0) {
+			// 不剔除
+			if (normal.z == 0.0f) {
+				return false;
+			}
+		}
+		else if (cullFace == 1) {
+			// 背面剔除 GL_BACK
+			if (normal.z > 0.0f) {
+				return false;
+			}
+			else if (normal.z == 0.0f) {
+				return false;
+			}
+		}
+		else if (cullFace == 2) {
+			// 正面剔除 GL_FRONT
+			if (normal.z < 0.0f) {
+				return false;
+			}
+			else if (normal.z == 0.0f) {
+				return false;
+			}
+		}
+		else if (cullFace == 3) {
+			// 全剔除
 			return false;
 		}
 

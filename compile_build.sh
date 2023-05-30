@@ -1,0 +1,1 @@
+gcc -O2 sample_07_specular.cpp -o sample_07_specular -lstdc++ -lm && ./sample_07_specular

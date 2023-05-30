@@ -4,7 +4,7 @@
 
 int main(void) 
 {
-	RenderHelp rh(600, 800);
+	RenderHelp rh(1200, 800);
 
 	// 加载模型
 	Model model("res/diablo3_pose.obj");
@@ -17,11 +17,12 @@ int main(void)
 
 	Mat4x4f mat_model = matrix_set_scale(1, 1, 1);
 	Mat4x4f mat_view = matrix_set_lookat(eye_pos, eye_at, eye_up);
-	Mat4x4f mat_proj = matrix_set_perspective(perspective, 6 / 8.0, 1.0, 500.0f);
+	Mat4x4f mat_proj = matrix_set_perspective(perspective, 12 / 8.0, 1.0, 500.0f);
 	Mat4x4f mat_mvp = mat_model * mat_view * mat_proj;
 
 	// 用于将法向量从模型坐标系变换到世界坐标系
 	Mat4x4f mat_model_it = matrix_invert(mat_model).Transpose();
+	Mat4x4f mat_mvp_it = matrix_invert(mat_mvp).Transpose();
 
 	// 顶点属性
 	struct { Vec3f pos; Vec3f normal; Vec2f uv; } vs_input[3];
@@ -72,6 +73,34 @@ int main(void)
 		// 绘制三角形
 		rh.DrawPrimitive();
 	}
+
+
+	rh.SetVertexShader([&] (int index, ShaderContext& output) -> Vec4f {
+			Vec4f pos = vs_input[index].pos.xyz1() * mat_mvp;
+			Vec3f n = (vs_input[index].normal.xyz1() * mat_mvp_it).xyz();
+			float scale = 0.03;
+			pos.x += n.x * scale;
+			pos.y += n.y * scale;
+			pos.z += 0.5;
+			return pos;
+		});
+
+	rh.SetPixelShader([&] (ShaderContext& input) -> Vec4f {
+			return Vec4f(0,0,0,1);
+		});
+
+	// 迭代模型每一个面
+	for (int i = 0; i < model.nfaces(); i++) {
+		// 设置三个顶点的输入，供 VS 读取
+		for (int j = 0; j < 3; j++) {
+			vs_input[j].pos = model.vert(i, j);
+			vs_input[j].uv = model.uv(i, j);
+			vs_input[j].normal = model.normal(i, j);
+		}
+		// 绘制三角形
+		rh.DrawPrimitive(2);
+	}
+
 
 	rh.SaveFile("output.bmp");
 
